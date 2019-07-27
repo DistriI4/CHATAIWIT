@@ -107,29 +107,19 @@ app.post('/chat', (req, res) => {
       });
     }
 
-    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device ==='luces'
-    || device ==='refrigerador' || device ==='plancha' || device ==='cocina' ) {
+    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device ==='luces'|| device ==='refrigerador' || device ==='plancha' || device ==='cocina' ) {
       comando = "ON";
-      //sendCommand(comando);
+      sendCommand(comando);
       //artyom.addCommands(comandoHola);
       return pusher.trigger('bot', 'bot-response', {
         message:
           responses.action[0] +" "+ device,
       });
     }
-    /*else if (action ==='Encender' || action === 'Enciende'|| action === 'Prender' && device ==='refrigerador') {
-      comando = "ON";
-      sendCommand(comando);
-      return pusher.trigger('bot', 'bot-response', {
-        message:
-          responses.action[0] +" "+ device,
-      });
-    }*/
 
-    if (action === 'Apagar' || action === 'Apaga' && device ==='luces'
-    || device ==='refrigerador' || device ==='plancha' || device ==='cocina') {
+    if (action === 'Apagar' || action === 'Apaga' && device ==='luces' || device ==='refrigerador' || device ==='plancha' || device ==='cocina') {
       comando = "OFF";
-      //sendCommand(comando);
+      sendCommand(comando);
       return pusher.trigger('bot', 'bot-response', {
         message:
           responses.action[1] +" "+ device,
@@ -172,7 +162,7 @@ app.post('/chat', (req, res) => {
 
   }
 
-//getState();
+getState();
 
 function setState( txtNewState )
 {

@@ -72,7 +72,7 @@ export default class App extends Component {
       conversation: [...this.state.conversation, msg],
     });
 
-    fetch('http://localhost:7777/chat', {
+    fetch('http://13.82.45.200:7777/chat', { //para pruebas usar localhost
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
