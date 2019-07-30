@@ -136,8 +136,9 @@ app.post('/chat', (req, res) => {
 
     if(state === 'Status' || state === 'Estado')
     {
-      //estado=getState();
-      if (getState() === "180,100,0")
+      estado = getState();
+      console.log(estado);
+      if (estado === "180,100,0")
       {
         return pusher.trigger('bot', 'bot-response', {
           message:
@@ -151,7 +152,6 @@ app.post('/chat', (req, res) => {
             responses.state[0],
         });
       }
-
 
     };
 
