@@ -52,6 +52,8 @@ var comando = "OFF";
 
 const app = express();
 
+var estado = "OFFLINE";
+
 
 
 
@@ -74,6 +76,10 @@ app.post('/chat', (req, res) => {
     action: [
       'encendiendo', 'apagando',
     ],
+
+    state: [
+      'El dispositivo se encuentra encendido', 'El dispositivo se encuentra apagado',
+    ],
   };
 
   const firstEntityValue = (entities, entity) => {
@@ -95,6 +101,8 @@ app.post('/chat', (req, res) => {
     const greetings = firstEntityValue(entities, 'greetings');
     const action = firstEntityValue(entities, 'getAccion');
     const device = firstEntityValue(entities, 'dispositivo');
+    const state = firstEntityValue(entities, 'getState');
+
     console.log(action);
     console.log(device);
 
@@ -124,6 +132,19 @@ app.post('/chat', (req, res) => {
         message:
           responses.action[1] +" "+ device,
       });
+    };
+
+    if(state === 'status' || state === 'estado')
+    {
+      estado=getState();
+      if (estado === "180,100,0")
+      {
+        return pusher.trigger('bot', 'bot-response', {
+          message:
+            responses.action[1],
+        });
+      }
+
     };
 
     return pusher.trigger('bot', 'bot-response', {
