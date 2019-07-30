@@ -103,8 +103,8 @@ app.post('/chat', (req, res) => {
     const device = firstEntityValue(entities, 'dispositivo');
     const state = firstEntityValue(entities, 'getState');
 
-    console.log(action);
-    console.log(device);
+    //console.log(action);
+    //console.log(device);
 
     if (greetings) {
       return pusher.trigger('bot', 'bot-response', {
@@ -134,10 +134,10 @@ app.post('/chat', (req, res) => {
       });
     };
 
-    if(state === 'status' || state === 'estado')
+    if(state === 'Status' || state === 'Estado')
     {
-      estado=getState();
-      if (estado === "180,100,0")
+      //estado=getState();
+      if (getState() === "180,100,0")
       {
         return pusher.trigger('bot', 'bot-response', {
           message:
