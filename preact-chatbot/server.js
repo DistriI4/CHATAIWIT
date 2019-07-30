@@ -141,9 +141,17 @@ app.post('/chat', (req, res) => {
       {
         return pusher.trigger('bot', 'bot-response', {
           message:
-            responses.action[1],
+            responses.state[1],
         });
       }
+      else
+      {
+        return pusher.trigger('bot', 'bot-response', {
+          message:
+            responses.state[0],
+        });
+      }
+
 
     };
 
