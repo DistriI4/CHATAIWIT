@@ -107,7 +107,7 @@ app.post('/chat', (req, res) => {
       });
     }
 
-    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device ==='luces'|| device ==='refrigerador' || device ==='plancha' || device ==='cocina' || device ==='licuadora' || device ==='lavadora' || device ==='cafetera') {
+    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device ==='luces' || device ==='refrigerador' || device ==='plancha' || device ==='cocina' || device ==='licuadora' || device ==='lavadora' || device ==='cafetera') {
       comando = "ON";
       sendCommand(comando);
       //artyom.addCommands(comandoHola);
