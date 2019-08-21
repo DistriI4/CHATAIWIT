@@ -50,12 +50,29 @@ h1 {
   border-radius: 50%;
 }
 
+.boton{
+  font-size:24px;
+  color:black;
+  margin-left: 0px;
+  border-radius: 50%;
+  background-color: #88A2F0;
+  width: 10%;
+}
+
 
 .text-input {
   width: 100%;
-  border-radius: 4px;
-  border: 1px solid #999;
+  border-radius: 2px;
+  border: 2px solid #999;
   padding: 5px;
+  min-height:0px;
+}
+
+.text-input2 {
+  width: 80%;
+  border-radius: 1px;
+  padding: 7px;
+  font-size:12px;
 }
 
 .chat-bubble {
@@ -80,3 +97,7 @@ h1 {
   border-radius: 10px;
   overflow:auto;
 }
+
+.colum{
+		column-count:1;
+	}

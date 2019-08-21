@@ -6,6 +6,7 @@ import Pusher from 'pusher-js';
 
 
 
+
 //var recognised = document.getElementById("recognised");
 
 
@@ -22,12 +23,41 @@ export default class App extends Component {
     this.state = {
       userMessage: '',
       conversation: [],
+      recorder:true,
+      is_picking_file: false,
       //artyomActive: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    //this.getElementById = this.getElementById.bind(this);
   }
+
+  onSend([message]) {
+    if (message.text) {
+      let msg = {
+        text: message.text,
+        user: 'user',
+      };
+    if (this.attachment) { // check if the user attached something
+      const filename = this.attachment.name;
+      const type = this.attachment.file_type;
+        msg.attachment = {
+          file: {
+            uri: this.attachment.uri,
+            type: type,
+            name: `${filename}`
+          },
+          name: `${filename}`,
+          type: this.attachment.type
+          };
+        }
+      this.currentUser.sendMessage(msg).then(() => {
+        this.attachment = null;
+      });
+    }
+  }
+
 
   /*La 'handleChange' función se ejecuta en cada pulsación
   de tecla para actualizar, lo 'userMessageque' permite que
@@ -72,7 +102,8 @@ export default class App extends Component {
       conversation: [...this.state.conversation, msg],
     });
 
-    fetch('http://13.82.45.200:7777/chat', { //para pruebas usar localhost
+    //fetch('http://13.82.45.200:7777/chat', { //para pruebas usar localhost
+    fetch('http://localhost:7777/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -97,8 +128,13 @@ export default class App extends Component {
       ChatBubble(e.text, index, e.user)
     );
 
+
     return (
       <div>
+      <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"/>
+		    <script type="text/javascript" src="recorder.js"> </script>
+      </head>
         <div class="msj-rta macro" style="margin:auto">
           <div class="chat-window">
             <div class="title">
@@ -108,19 +144,27 @@ export default class App extends Component {
             <div class="text text-r" style="background:whitesmoke !important">
             <div class="conversation-view">{chat}</div>
             <div class="message-box">
-              <form onSubmit={this.handleSubmit}>
-                <input
-                  id="recognised"
-                  value={this.state.userMessage}
-                  onInput={this.handleChange}
-                  class="text-input"
-                  type="text"
-                  autofocus
-                  aria-describedby="basic-addon1"
-                  placeholder="Escribe tu mensaje y presiona enter para enviar"
-                />
-              </form>
+             <div class="colum">
+                <form onSubmit={this.handleSubmit}>
+                <div>
+                  <input
+                    value={this.state.userMessage}
+                    onInput={this.handleChange}
+                    class="text-input2"
+                    type="text"
+                    accept="audio/*;capture=microphone"
+                    autofocus
+                    aria-describedby="basic-addon1"
+                    placeholder="Escribe tu mensaje y presiona enter para enviar"
+                  />
+                </div>
+                </form>
+                <form action='http://192.168.0.104:7777/chat' method="POST" enctype="multipart/form-data" >
+                  <input type="file" name="file" accept="audio/*;capture=microphone" />
+                  <input type="submit" value="Subir"/>
+                </form>
               </div>
+             </div>
             </div>
           </div>
         </div>

@@ -4,11 +4,12 @@
 
 require('dotenv').config({ path: 'variables.env' });
 const express = require('express');
+const fileUpload = require('express-fileupload');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { Wit } = require('node-wit');
 const Pusher = require('pusher');
-const Artyom = require('artyom.js');
+
 
 var $ = require('jquery');
 // Activacion de libreria para Jquery
@@ -19,17 +20,10 @@ const { document } = (new JSDOM('').window);
 global.document = document;
 var $ = jQuery = require('jQuery')(window);
 
+var WitSpeech = require('node-witai-speech');
+var fs = require('fs');
 
-/*function startArtyom(){
-  artyom.initialize({
-    lang:"es-ES",
-    continuous:false,
-    debug:true,
-    listen:true
-  });
-}*/
 
-//const artyom = new Artyom();
 
 // PUSHER
 const pusher = new Pusher({
@@ -52,17 +46,92 @@ var comando = "OFF";
 
 const app = express();
 
-var estado = "OFFLINE";
+//var estado = "OFF";
 
+var API_KEY = process.env.WIT_ACCESS_TOKEN;
+var content_type = "audio/wav";
 
+/*app.post('/upload',(req,res) => {
+  let EDFile = req.files.file
+  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
+  /*var API_KEY = process.env.WIT_ACCESS_TOKEN;
+  var content_type = "audio/wav";
+  var parseSpeech =  new Promise((ressolve, reject) => {
+      // call the wit.ai api with the created stream
+      WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
+      (err, res) => {
+          if (err) return reject(err);
+          ressolve(res);
+          console.log(res);
+      });
+  });*/
 
+/* Guarda los archivos en el servidor
+  EDFile.mv(`./files/${EDFile.name}`,err => {
+    var stream2 = fs.createReadStream(`files/${EDFile.name}`);
+    var parseSpeech =  new Promise((ressolve, reject) => {
+        // call the wit.ai api with the created stream
+        WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
+        (err, res) => {
+            if (err) return reject(err);
+            ressolve(res);
+            console.log(res);
+        });
+    });
+       if(err) return res.status(500).send({ message : err })
 
+       return res.status(200).send({ message : 'File upload' })
+   })
+});*/
+
+app.use(fileUpload());
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+/*var stream = fs.createReadStream('D:/Grabaciones/archivo.wav');
+var API_KEY = process.env.WIT_ACCESS_TOKEN;
+var content_type = "audio/wav";
+var parseSpeech =  new Promise((ressolve, reject) => {
+    // call the wit.ai api with the created stream
+    WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream, content_type,
+    (err, res) => {
+        if (err) return reject(err);
+        ressolve(res);
+    });
+});
+parseSpeech.then((data) => {
+  console.log(data);
+  handleMessage(data);
+})
+.catch((err) => {
+    console.log(err);
+});*/
+
+
+
 app.post('/chat', (req, res) => {
+
   const { message } = req.body;
+  let EDFile = req.files.file;
+  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
+  EDFile.mv(`./files/${EDFile.name}`,err => {
+  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
+       //if(err) return res.status(500).send({ message : err })
+       //return res.status(200).send({ message : 'File upload' })
+   })
+   var stream2 = fs.createReadStream(`files/${EDFile.name}`);
+   var parseSpeech =  new Promise((ressolve, reject) => {
+         // call the wit.ai api with the created stream
+         WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
+         (err, res) => {
+             if (err) return reject(err);
+             ressolve(res);
+         });
+     });
+
+
 
   const responses = {
     greetings: ["Hola, how's it going?", "What's good with you?"],
@@ -103,9 +172,6 @@ app.post('/chat', (req, res) => {
     const device = firstEntityValue(entities, 'dispositivo');
     const state = firstEntityValue(entities, 'getState');
 
-    //console.log(action);
-    //console.log(device);
-
     if (greetings) {
       return pusher.trigger('bot', 'bot-response', {
         message:
@@ -115,87 +181,80 @@ app.post('/chat', (req, res) => {
       });
     }
 
-    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device ==='luces' || device ==='refrigerador' || device ==='plancha' || device ==='cocina' || device ==='licuadora' || device ==='lavadora' || device ==='cafetera') {
+    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device) {
       comando = "ON";
-      sendCommand(comando);
-      //artyom.addCommands(comandoHola);
+      //sendCommand(comando);
       return pusher.trigger('bot', 'bot-response', {
         message:
           responses.action[0] +" "+ device,
       });
     }
 
-    if (action === 'Apagar' || action === 'Apaga' && device ==='luces' || device ==='refrigerador' || device ==='plancha' || device ==='cocina' || device ==='licuadora' || device ==='lavadora' || device ==='cafetera') {
+    if (action === 'Apagar' || action === 'Apaga' && device) {
       comando = "OFF";
-      sendCommand(comando);
+      //sendCommand(comando);
       return pusher.trigger('bot', 'bot-response', {
         message:
           responses.action[1] +" "+ device,
       });
     };
-
-    if(state === 'Status' || state === 'Estado')
-    {
-      estado = getState();
-      console.log(estado);
-      return pusher.trigger('bot', 'bot-response', {
-        message:
-          responses.state[1],
-      });
-      /*if (estado === '180,100,0')
-      {
-        return pusher.trigger('bot', 'bot-response', {
-          message:
-            responses.state[1],
-        });
-      }
-      else
-      {
-        return pusher.trigger('bot', 'bot-response', {
-          message:
-            responses.state[0],
-        });
-      }*/
-
-    };
-
     return pusher.trigger('bot', 'bot-response', {
       message: 'Hola ¿En qué puedo ayudar?',
     });
   };
 
+  parseSpeech.then((data) => {
+    console.log(data);
+    handleMessage(data);
+  })
+  .catch((err) => {
+      console.log(err);
+  });
+
   client
     .message(message)
     .then(data => {
       handleMessage(data);
-      console.log(data);
+      //console.log(data);
     })
     .catch(error => console.log(error));
 });
 
+
+
+  //console.log(state);
   function getState()
   {
     console.log("Aqui empieza");
+    var status = "0";
     var request = $.ajax
     ({
         type       : 'GET',
         //url        : 'http://192.168.43.54:8080/rest/items/milight_rgbiboxLed_F0FE6BA2F89E_ledcolor/state', //LOCAL
         url        :'https://isa_daya15@hotmail.com:Openhab.2019@home.myopenhab.org/rest/items/milight_rgbiboxLed_F0FE6BA2F89E_ledcolor/state' // REMOTO
-        //dataType   :  'json',
-        //contentType:  'application/json'
+        //url        : 'https://home.myopenhab.org/rest/items/milight_rgbiboxLed_F0FE6BA2F89E_ledbrightness/state'
     })
+    //var status = JSON.parse(data);
+    //console.log()
     request.done( function(data)
     {
         console.log( "Success: Status = " + data );
+        //var status = data;
+        //console.log(status);
+        //status = data;
+        //return(status);
+
     });
     request.fail( function(jqXHR, textStatus )
     {
         console.log( "Failure: " + textStatus );
+        //return(data);
     });
+    //var status = JSON.parse(data);
 
   }
 
-getState();
+//getState();
 
 function setState( txtNewState )
 {
@@ -253,3 +312,27 @@ app.set('port', process.env.PORT || 7777);
 const server = app.listen(app.get('port'), () => {
   console.log(`Express running → PORT ${server.address().port}`);
 });
+
+/*var stream = fs.createReadStream('D:/Grabaciones/archivo2.wav');
+// The wit.ai instance api key
+var API_KEY = process.env.WIT_ACCESS_TOKEN;
+var content_type = "audio/wav";
+var parseSpeech =  new Promise((ressolve, reject) => {
+    // call the wit.ai api with the created stream
+    WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream, content_type,
+    (err, res) => {
+        if (err) return reject(err);
+        ressolve(res);
+
+    });
+});
+parseSpeech.then((data) => {
+    //console.log(data);
+})
+.catch((err) => {
+    console.log(err);
+})*/
+
+
+
+//grabar audio
