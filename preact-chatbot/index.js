@@ -6,7 +6,6 @@ import Pusher from 'pusher-js';
 
 
 
-
 //var recognised = document.getElementById("recognised");
 
 
@@ -23,9 +22,6 @@ export default class App extends Component {
     this.state = {
       userMessage: '',
       conversation: [],
-      recorder:true,
-      is_picking_file: false,
-      //artyomActive: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -93,6 +89,7 @@ export default class App extends Component {
 
   handleSubmit(event) {
     event.preventDefault();
+
     const msg = {
       text: this.state.userMessage,
       user: 'user',
@@ -102,7 +99,7 @@ export default class App extends Component {
       conversation: [...this.state.conversation, msg],
     });
 
-    //fetch('http://13.82.45.200:7777/chat', { //para pruebas usar localhost
+    //fetch('http://192.168.0.105:7777/chat', { //para pruebas usar localhost
     fetch('http://localhost:7777/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -150,22 +147,21 @@ export default class App extends Component {
                   <input
                     value={this.state.userMessage}
                     onInput={this.handleChange}
-                    class="text-input2"
+                    class="text-input"
                     type="text"
-                    accept="audio/*;capture=microphone"
                     autofocus
                     aria-describedby="basic-addon1"
                     placeholder="Escribe tu mensaje y presiona enter para enviar"
                   />
                 </div>
                 </form>
-                <form action='http://192.168.0.104:7777/chat' method="POST" enctype="multipart/form-data" >
-                  <input type="file" name="file" accept="audio/*;capture=microphone" />
-                  <input type="submit" value="Subir"/>
-                </form>
               </div>
              </div>
             </div>
+            <form class="text-input" action ='http://192.168.0.105:7777/uploadFile' method="POST" enctype="multipart/form-data">
+              <input type="file" name="file" accept="audio/*" capture="microphone"/>
+              <input type="submit" value="Subir" />
+            </form>
           </div>
         </div>
       </div>

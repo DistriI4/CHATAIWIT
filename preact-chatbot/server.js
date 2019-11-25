@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { Wit } = require('node-wit');
 const Pusher = require('pusher');
+//var popup = require('popups');
 
 
 var $ = require('jquery');
@@ -22,7 +23,11 @@ var $ = jQuery = require('jQuery')(window);
 
 var WitSpeech = require('node-witai-speech');
 var fs = require('fs');
-
+var ffmpeg = require('ffmpeg');
+//const fs = require('fs');
+const toWav = require('audiobuffer-to-wav');
+const AudioContext = require('web-audio-api').AudioContext;
+const audioContext = new AudioContext;
 
 
 // PUSHER
@@ -41,110 +46,163 @@ const client = new Wit({
 
 
 
-
 var comando = "OFF";
 
 const app = express();
 
 //var estado = "OFF";
 
-var API_KEY = process.env.WIT_ACCESS_TOKEN;
-var content_type = "audio/wav";
-
-/*app.post('/upload',(req,res) => {
-  let EDFile = req.files.file
-  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
-  /*var API_KEY = process.env.WIT_ACCESS_TOKEN;
-  var content_type = "audio/wav";
-  var parseSpeech =  new Promise((ressolve, reject) => {
-      // call the wit.ai api with the created stream
-      WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
-      (err, res) => {
-          if (err) return reject(err);
-          ressolve(res);
-          console.log(res);
-      });
-  });*/
-
-/* Guarda los archivos en el servidor
-  EDFile.mv(`./files/${EDFile.name}`,err => {
-    var stream2 = fs.createReadStream(`files/${EDFile.name}`);
-    var parseSpeech =  new Promise((ressolve, reject) => {
-        // call the wit.ai api with the created stream
-        WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
-        (err, res) => {
-            if (err) return reject(err);
-            ressolve(res);
-            console.log(res);
-        });
-    });
-       if(err) return res.status(500).send({ message : err })
-
-       return res.status(200).send({ message : 'File upload' })
-   })
-});*/
 
 app.use(fileUpload());
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
-/*var stream = fs.createReadStream('D:/Grabaciones/archivo.wav');
-var API_KEY = process.env.WIT_ACCESS_TOKEN;
-var content_type = "audio/wav";
-var parseSpeech =  new Promise((ressolve, reject) => {
-    // call the wit.ai api with the created stream
-    WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream, content_type,
-    (err, res) => {
-        if (err) return reject(err);
-        ressolve(res);
-    });
-});
-parseSpeech.then((data) => {
-  console.log(data);
-  handleMessage(data);
-})
-.catch((err) => {
-    console.log(err);
-});*/
-
-
-
 app.post('/chat', (req, res) => {
 
   const { message } = req.body;
-  let EDFile = req.files.file;
-  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
-  EDFile.mv(`./files/${EDFile.name}`,err => {
-  //var stream2 = fs.createReadStream(`files/${EDFile.name}`);
-       //if(err) return res.status(500).send({ message : err })
-       //return res.status(200).send({ message : 'File upload' })
-   })
-   var stream2 = fs.createReadStream(`files/${EDFile.name}`);
-   var parseSpeech =  new Promise((ressolve, reject) => {
-         // call the wit.ai api with the created stream
-         WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream2, content_type,
-         (err, res) => {
-             if (err) return reject(err);
-             ressolve(res);
-         });
+  const responses = {
+    greetings: ["Hola, ¿En qué puedo ayudarte ?", "¿Qué hay de nuevo?"],
+
+    respDefault: ["Disculpa, no entendí!", "¿En qué más puedo ayudarte?", "¿Qué mas puedo hacer por ti?"],
+
+    respAccion: [ 'encendiendo','apagando'],
+
+    respOn: [ '¡Por supuesto!','Su dispositivo ha sido encendido', '¡Con mucho gusto!', 'Muy bien'],
+
+    respOff: [ 'Su dispositivo ha sido apagado','Muy Bien'],
+
+    state: [
+      'El dispositivo se encuentra encendido', 'El dispositivo se encuentra apagado',
+    ],
+  };
+
+  const firstEntityValue = (entities, entity) => {
+    const val =
+      entities &&
+      entities[entity] &&
+      Array.isArray(entities[entity]) &&
+      entities[entity].length > 0 &&
+      entities[entity][0].value;
+
+    if (!val) {
+      return null;
+    }
+
+    return val;
+  };
+
+  const handleMessage = ({ entities }) => {
+    const greetings = firstEntityValue(entities, 'saludos');
+    const action = firstEntityValue(entities, 'getAccion');
+    const place = firstEntityValue(entities, 'habitacion');
+    const device = firstEntityValue(entities, 'dispositivo');
+    const state = firstEntityValue(entities, 'getState');
+
+    if (greetings) {
+      return pusher.trigger('bot', 'bot-response', {
+        message:
+          responses.greetings[
+            Math.floor(Math.random() * responses.greetings.length)
+          ],
+      });
+    }
+
+    if (action === 'Encender' && device || (action === 'Encender' && device && place)) {
+      comando = "ON";
+      //sendCommand(comando);
+      return pusher.trigger('bot', 'bot-response', {
+        message:
+          responses.respOn[
+            Math.floor(Math.random() * responses.respOn.length)
+          ],
+      });
+    }
+
+    if (action && device || (action && device && place)) {
+      comando = "OFF";
+      //sendCommand(comando);
+      return pusher.trigger('bot', 'bot-response', {
+        message:
+          "En este momento se está" + " " + responses.respAccion[1] +" "+ device,
+      });
+    };
+    return pusher.trigger('bot', 'bot-response', {
+      message:
+        responses.respDefault[
+          Math.floor(Math.random() * responses.respDefault.length)
+        ],
+    });
+  };
+
+  client
+    .message(message)
+    .then(data => {
+      console.log('Respuesta: ' + JSON.stringify(data));
+      handleMessage(data);
+    })
+    .catch(error => console.log(error));
+});
+
+
+
+app.post('/uploadFile', (req, res) => {
+
+  if (req.files === null) {
+    return res.redirect('http://192.168.0.105:8080');
+    /*pusher.trigger('bot', 'bot-response', {
+      message:"Cargar archivo",
+    });*/
+  }
+  else {
+    let EDFile = req.files.file;
+    console.log(EDFile);
+    EDFile.mv(`./files/${EDFile.name}`,err => {
+      if(err) return res.status(500).send({ message : err })
+      //return res.status(200).send({ message : 'File upload' })
+       //return res.send('uploadFile');
+       console.log('Archivo enviado');
+       res.redirect('http://192.168.0.105:8080');
      });
 
+     var stream = fs.createReadStream(`./files/${EDFile.name}`);
 
+     if (req.files.file.mimetype === "audio/mpeg") {
+      console.log("Probando audio");
+      var content_type = "audio/mpeg";
+     }
+
+     else {
+       var content_type = "audio/wav";
+     }
+     var parseSpeech =  new Promise((ressolve, reject) => {
+       WitSpeech.extractSpeechIntent(process.env.WIT_ACCESS_TOKEN, stream, content_type,
+         (err, res) => {
+           //if (err) {return reject(err)}
+           if (err) {
+             return pusher.trigger('bot', 'bot-response', {
+               message:"Lo siento. Error al cargar archivo",
+             });
+           }
+           return ressolve(res);
+         });
+       });
+       fs.unlink(`./files/${EDFile.name}`,err => {
+         //if(err) return res.status(500).send({ message : err })
+         //return res.status(200);
+       });
+     }
 
   const responses = {
-    greetings: ["Hola, how's it going?", "What's good with you?"],
+    greetings: ["Hola, ¿En qué puedo ayudarte ?", "¿Qué hay de nuevo?"],
 
-    jokes: [
-      'Do I lose when the police officer says papers and I say scissors?',
-      'I have clean conscience. I haven’t used it once till now.',
-      'Did you hear about the crook who stole a calendar? He got twelve months.',
-    ],
+    respDefault: ["Disculpa, no entendí!", "¿En qué más puedo ayudarte?", "¿Qué mas puedo hacer por ti?"],
 
-    action: [
-      'encendiendo', 'apagando',
-    ],
+    respAccion: [ 'encendiendo','apagando'],
+
+    respOn: [ '¡Por supuesto!','Su dispositivo ha sido encendido', '¡Con mucho gusto!', 'Muy bien'],
+
+    respOff: [ 'Su dispositivo ha sido apagado','Muy Bien'],
 
     state: [
       'El dispositivo se encuentra encendido', 'El dispositivo se encuentra apagado',
@@ -172,6 +230,7 @@ app.post('/chat', (req, res) => {
     const device = firstEntityValue(entities, 'dispositivo');
     const state = firstEntityValue(entities, 'getState');
 
+
     if (greetings) {
       return pusher.trigger('bot', 'bot-response', {
         message:
@@ -181,46 +240,43 @@ app.post('/chat', (req, res) => {
       });
     }
 
-    if (action === 'Encender' || action === 'Enciende' || action === 'Prender' && device) {
+    if (action === 'Encender' && device || (action === 'Encender' && device && place)) {
       comando = "ON";
       //sendCommand(comando);
       return pusher.trigger('bot', 'bot-response', {
         message:
-          responses.action[0] +" "+ device,
+          responses.respOn[
+            Math.floor(Math.random() * responses.respOn.length)
+          ],
       });
     }
 
-    if (action === 'Apagar' || action === 'Apaga' && device) {
+    if (action && device || (action && device && place)) {
       comando = "OFF";
       //sendCommand(comando);
       return pusher.trigger('bot', 'bot-response', {
         message:
-          responses.action[1] +" "+ device,
+          "En este momento se está" + " " + responses.respAccion[1] +" "+ device,
       });
     };
     return pusher.trigger('bot', 'bot-response', {
-      message: 'Hola ¿En qué puedo ayudar?',
+      message:
+        responses.respDefault[
+          Math.floor(Math.random() * responses.respDefault.length)
+        ],
     });
   };
 
-  parseSpeech.then((data) => {
-    console.log(data);
-    handleMessage(data);
-  })
-  .catch((err) => {
-      console.log(err);
-  });
 
-  client
-    .message(message)
-    .then(data => {
+  parseSpeech
+    .then((data) => {
+      pusher.trigger('bot', 'bot-response',{message: 'Audio: ' + JSON.stringify(data["_text"]),});
+      console.log('Respuesta: ' + JSON.stringify(data));
       handleMessage(data);
-      //console.log(data);
     })
-    .catch(error => console.log(error));
+    .catch((err) => console.log(err));
+
 });
-
-
 
   //console.log(state);
   function getState()
